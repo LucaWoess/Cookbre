@@ -13,4 +13,9 @@ public class DBManager {
 				);
 		return con;
 	}
+	
+	public static void releaseConnection(Connection con) throws SQLException{ 
+			if(con != null)
+				con.close();
+	}
 }
