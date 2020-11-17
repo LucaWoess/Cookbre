@@ -24,7 +24,7 @@ Cookbre (bre, short for Russian brat = brother)
 
 ## Goals
 - Access to a big amount of dishes, which are scraped from a website using an API.
-- Possibility to remove dishes and to add dishes by entering the dish name, dish cooking instructions, dish image (optional), ingredient name, ingredient unit and ingredient quantity.
+- Possibility to remove dishes and to add dishes by entering the dish name, dish cooking instructions, dish image (optional), ingredient name, ingredient unit, ingredient quantity and if dish is vegetarian or not.
 - Possibility of displaying dishes by name or by specifying the ingredients available at home. The displayed dishes can be filtered by vegetarian or not vegetarian.
 - Display of the current time.
 
