@@ -22,8 +22,7 @@ public class DBManager {
 	}
 	
 	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Blob dishImage, Map<String, Map<String, Object>> ingredients, boolean istVeggie) {
-		try {
-			getConnection();
+		/*try {
 			Statement stmt = con.createStatement();
 			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,dishImage,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','"+istVeggie+"')");
 			for(String ingredient : ingredients.keySet()) {
@@ -31,16 +30,14 @@ public class DBManager {
 			int ingredientID = stmt.executeUpdate("Select Zutat_ID from table Zutat where Zutat_Name ='"+((Map)ingredients.get(ingredient))+"'");
 			int dishID = stmt.executeUpdate("Select Gericht_ID from table Gericht where Gericht_Name ='"+dishName+"'");
 			stmt.executeUpdate("Insert into Menge(Zutat_ID,Zutat_Namem,Einheit) values('"+ingredientID+"','"+dishID+"','"+((Map)ingredients.get(ingredient)).get("unit")+"')");
-			releaseConnection(con);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Map<String, Map<String, Object>> ingredients, boolean istVeggie) {
-		try {
-			getConnection();
+		/*try {
 			Statement stmt = con.createStatement();
 			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,dishImage,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','null','"+istVeggie+"')");
 			for(String ingredient : ingredients.keySet()) {
@@ -48,21 +45,18 @@ public class DBManager {
 			int ingredientID = stmt.executeUpdate("Select Zutat_ID from table Zutat where Zutat_Name ='"+((Map)ingredients.get(ingredient))+"'");
 			int dishID = stmt.executeUpdate("Select Gericht_ID from table Gericht where Gericht_Name ='"+dishName+"'");
 			stmt.executeUpdate("Insert into Menge(Zutat_ID,Zutat_Namem,Einheit) values('"+ingredientID+"','"+dishID+"','"+((Map)ingredients.get(ingredient)).get("unit")+"')");
-			releaseConnection(con);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	public static void removeDish(Connection con) {
-		try {
-			getConnection();
+		/*try {
 			Statement stmt = con.createStatement();
 			stmt.executeUpdate("Delete from Gericht where /");
-			releaseConnection(con);
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 }
