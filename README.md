@@ -28,6 +28,11 @@ Cookbre (bre, short for Russian brat = brother)
 - Possibility of displaying dishes by name or by specifying the ingredients available at home. The displayed dishes can be filtered by vegetarian or not vegetarian.
 - Display of the current time.
 
+## Installation
+Clone the repository into a local folder by using the command: git clone https://github.com/LucaWoess/Cookbre.git
+
+Further explanation comming soon
+
 ## Contact
 
 If you have any questions about this project, please feel free to contact us.
