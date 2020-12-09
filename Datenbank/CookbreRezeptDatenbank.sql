@@ -1,12 +1,12 @@
-create database CookbreRezeptDatenbank;
-use CookbreRezeptDatenbank;
+create database cookbrerezeotdatenbank;
+use cookbrerezeotdatenbank;
 
 Create table Gericht (
 	Gericht_ID int auto_increment primary key,
     Gericht_Name varchar(50) not null,
-    Gericht_Kochanleitung varchar(30000) not null,
+    Gericht_Kochanleitung text not null,
     Gerich_Bild blob,
-    Ist_Veggie boolean not null
+    Ist_Veggie boolean
 );
 
 Create table Zutat (
