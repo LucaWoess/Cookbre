@@ -7,30 +7,38 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class CookbreMain {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		APIWrapper apiWrapper = new APIWrapper();
+		
+		try {
+			DBManager.createDatabase();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		
 		try {
 			Connection con = DBManager.getConnection();
 			try {
 				String response = apiWrapper.getRecipe().body().string();
 				JSONArray array = new JSONArray(apiWrapper.getRecipe().body().string());
-				//System.out.println(array.getJSONObject(0).get("name"));
 				System.out.println(response);
-				/*for (Object object : array.getJSONObject(0).getJSONArray("ingredients")) {
+				System.out.println(array.getJSONObject(0).get("name"));
+				System.out.println(array.getJSONObject(0).get("images"));
+				for (Object object : array.getJSONObject(0).getJSONArray("ingredients")) {
 					System.out.println(object);
-				}*/
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
+					}
+				System.out.println(array.getJSONObject(0).get("instructions"));
+				}
+			catch (JSONException e) {
 				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				DBManager.releaseConnection(con);
+				} 
 			}
-			DBManager.releaseConnection(con);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+		catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
-
 }
+
+
+
