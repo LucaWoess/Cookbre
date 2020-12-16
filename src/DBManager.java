@@ -2,7 +2,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.InputMismatchException;
 import java.util.Map;
+import java.util.Scanner;
+
+import org.json.JSONArray;
+
+import java.io.IOException;
 import java.sql.Blob;
 
 public class DBManager {
@@ -11,9 +18,85 @@ public class DBManager {
 		con = DriverManager.getConnection(
 				"jdbc:mysql://127.0.0.1:3306/cookbrerezeptdatenbank?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", 	//DB
 				"Luca",							//user
-				"lucamysql127"								//password
+				"lucamysql127"					//password
 				);
 		return con;
+	}
+	
+	public static void scrapeData() {
+		String dishName = "";
+		String dishCookingInstruction = "";
+		Blob dishImage = null;
+		boolean istVeggie = false;
+		int tempvar = -1;
+		String URL;
+		Map<String, Map<String, Object>> ingredients = new HashMap<>();
+		APIWrapper apiWrapper = new APIWrapper();
+		Scanner Sc = new Scanner(System.in);
+		System.out.print("Fügen sie hier den Link des gwünschten neuen Rezepts ein: ");
+		URL = Sc.nextLine();
+		System.out.print("\nIst dieses Gericht vegetarisch? JA(0) NEIN(1) KEINE AHNUNG(2): ");
+		boolean ok;
+		do {
+			ok = true;
+			try {
+				Scanner S = new Scanner(System.in);
+				tempvar = S.nextInt();
+				}
+			catch (InputMismatchException ex) {
+				ok = false;
+				}
+			if(tempvar<0||tempvar>2) {
+				ok = false;
+			}
+			if(!ok) System.out.println("Dies ist keine der 3 Auswahlmöglichkeiten! \nVersuchen Sie es erneut: ");
+		}
+		while(!ok);
+
+		switch (tempvar){
+			case 0:
+				istVeggie = true;
+				break;
+				
+			case 1: 
+				istVeggie = false;
+				break;
+				
+			case 2: 
+				break;
+		}
+		
+		try {
+			String response = apiWrapper.getRecipe(URL).body().string();
+			JSONArray array = new JSONArray(apiWrapper.getRecipe(URL).body().string());
+			System.out.println(response);
+			dishName = (String) (array.getJSONObject(0).get("name"));
+			dishImage = (Blob) (array.getJSONObject(0).get("images"));
+			dishCookingInstruction = array.getJSONObject(0).getJSONArray("ingredients").toString();
+			String ingredient = "";
+			for (Object object : array.getJSONObject(0).getJSONArray("ingredients")) {
+				String[] arrOfStr = ((String) object).split(" ", 2);
+				ingredient = arrOfStr[2];
+			ingredients.put(ingredient, new HashMap<String, Object>());
+			ingredients.get(ingredient).put("amount", arrOfStr[0]);
+			ingredients.get(ingredient).put("unit", arrOfStr[1]);
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(istVeggie || !istVeggie)
+			try {
+				addDish(getConnection(), dishName, dishCookingInstruction, dishImage, ingredients, istVeggie);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		else
+			try {
+				addDish(getConnection(), dishName, dishCookingInstruction, dishImage, ingredients);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 	}
 	
 	public static void createDatabase() throws SQLException{
@@ -64,10 +147,10 @@ public class DBManager {
 		}*/
 	}
 	
-	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Map<String, Map<String, Object>> ingredients, boolean istVeggie) {
+	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Blob dishImage, Map<String, Map<String, Object>> ingredients) {
 		/*try {
 			Statement stmt = con.createStatement();
-			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,dishImage,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','null','"+istVeggie+"')");
+			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,dishImage,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','null')");
 			for(String ingredient : ingredients.keySet()) {
 			stmt.executeUpdate("Insert into Zutat(Zutat_Name) values('"+((Map)ingredients.get(ingredient))+"')");
 			int ingredientID = stmt.executeUpdate("Select Zutat_ID from table Zutat where Zutat_Name ='"+((Map)ingredients.get(ingredient))+"'");

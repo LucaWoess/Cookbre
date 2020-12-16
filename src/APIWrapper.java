@@ -7,16 +7,16 @@ import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
 public class APIWrapper {
-	public Response getRecipe() throws IOException {
+	public Response getRecipe(String URL) throws IOException {
 		OkHttpClient client = new OkHttpClient();
 
 		MediaType mediaType = MediaType.parse("application/xml");
-		RequestBody body = RequestBody.create(mediaType, "https://www.gutekueche.at/scheiterhaufen-rezept-2671");
+		RequestBody body = RequestBody.create(mediaType, "URL");
 		Request request = new Request.Builder()
 			.url("https://mycookbook-io1.p.rapidapi.com/recipes/rapidapi")
 			.post(body)
 			.addHeader("content-type", "application/xml")
-			.addHeader("x-rapidapi-key", "c5b314da2fmshb04fe3e1335f7fdp1a7f08jsn04abf9be390e")
+			.addHeader("x-rapidapi-key", "50dbb1f6fdmsh7d70313a69611f0p163dcejsne9eb67b73c45")
 			.addHeader("x-rapidapi-host", "mycookbook-io1.p.rapidapi.com")
 			.build();
 
