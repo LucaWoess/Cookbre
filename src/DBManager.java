@@ -2,6 +2,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Map;
@@ -9,6 +10,10 @@ import java.util.Scanner;
 
 import org.json.JSONArray;
 
+import java.awt.List;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Blob;
 
@@ -22,6 +27,20 @@ public class DBManager {
 				);
 		return con;
 	}
+	
+	public static void readURLFile(String fileName) throws FileNotFoundException, IOException{
+		ArrayList<String> URLs = new ArrayList<String>();
+		//List<String> URLs = new List<String>();
+		String s;
+        BufferedReader urlReader = new BufferedReader(new FileReader(fileName));
+        while((s = urlReader.readLine()) != null){
+            URLs.add(s);        
+        }
+        urlReader.close();
+        for (String k : URLs) {
+        	  System.out.println(k);
+        	}
+    }
 	
 	public static void scrapeData() {
 		String dishName = "";

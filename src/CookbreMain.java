@@ -16,8 +16,10 @@ public class CookbreMain {
 			e1.printStackTrace();
 		}*/
 		
+		String fileName ="URLs.txt";
+		DBManager.readURLFile(fileName);
 		//DBManager.scrapeData();
-		try {
+		/*try {
 			Connection con = DBManager.getConnection();
 			try {
 				String response = apiWrapper.getRecipe("https://www.gutekueche.at/scheiterhaufen-rezept-2671/").body().string();
@@ -37,7 +39,7 @@ public class CookbreMain {
 			}
 		catch (SQLException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 }
 
