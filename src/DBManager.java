@@ -1,5 +1,6 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -8,13 +9,18 @@ import java.util.InputMismatchException;
 import java.util.Map;
 import java.util.Scanner;
 
-import org.json.JSONArray;
+import javax.imageio.ImageIO;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.awt.Image;
 import java.awt.List;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.sql.Blob;
 
 public class DBManager {
@@ -22,30 +28,81 @@ public class DBManager {
 		Connection con = null;
 		con = DriverManager.getConnection(
 				"jdbc:mysql://127.0.0.1:3306/cookbrerezeptdatenbank?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", 	//DB
-				"Luca",							//user
-				"lucamysql127"					//password
+				"root",							//user
+				"root"					//password
 				);
 		return con;
 	}
-	
-	public static void readURLFile(String fileName) throws FileNotFoundException, IOException{
+
+	public static ArrayList<String> readURLFile(String fileName) throws FileNotFoundException, IOException{
 		ArrayList<String> URLs = new ArrayList<String>();
-		//List<String> URLs = new List<String>();
 		String s;
-        BufferedReader urlReader = new BufferedReader(new FileReader(fileName));
-        while((s = urlReader.readLine()) != null){
-            URLs.add(s);        
-        }
-        urlReader.close();
-        for (String k : URLs) {
-        	  System.out.println(k);
-        	}
-    }
-	
-	public static void scrapeData() {
+		BufferedReader urlReader = new BufferedReader(new FileReader(fileName));
+		while((s = urlReader.readLine()) != null){
+			URLs.add(s);        
+		}
+		urlReader.close();
+		return URLs;
+	}
+
+	public static void scrapeDataFromMultipleLinks() {
+		try {
+			for (String URL : readURLFile("URLs.txt")) {
+				String dishName = "";
+				String dishCookingInstruction = "";
+				Image dishImage = null;
+				Map<String, Map<String, Object>> ingredients = new HashMap<>();
+				APIWrapper apiWrapper = new APIWrapper();
+				try {
+					String response = apiWrapper.getRecipe(URL).body().string();
+					JSONArray array = new JSONArray(apiWrapper.getRecipe(URL).body().string());
+					System.out.println(response);
+					dishName = (String) (array.getJSONObject(0).get("name"));
+					try {
+						URL url = new URL(array.getJSONObject(0).get("images").toString()
+								.replace('"', ' ')
+								.replace('[', ' ')
+								.replace(']', ' ')
+								.trim());
+						dishImage = ImageIO.read(url);
+					} 
+					catch (IOException e) {
+					}
+					dishCookingInstruction = array.getJSONObject(0).getJSONArray("instructions").getJSONObject(0).getJSONArray("steps").join(" ").replaceAll("\"","");
+					String ingredient = "";
+					for (Object object : array.getJSONObject(0).getJSONArray("ingredients")) {
+						String[] arrOfStr = ((String) object).split(" ", 3);
+						System.out.println(arrOfStr[0]);
+						System.out.println(arrOfStr[1]);
+						System.out.println(arrOfStr[2]);
+						ingredient = arrOfStr[2];
+						ingredients.put(ingredient, new HashMap<String, Object>());
+						ingredients.get(ingredient).put("amount", arrOfStr[0]);
+						ingredients.get(ingredient).put("unit", arrOfStr[1]);
+					}
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
+					addDish(getConnection(), dishName, dishCookingInstruction, dishImage, ingredients);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void scrapeDataFromOneLink() {
 		String dishName = "";
 		String dishCookingInstruction = "";
-		Blob dishImage = null;
+		Image dishImage = null;
 		boolean istVeggie = false;
 		int tempvar = -1;
 		String URL;
@@ -61,10 +118,10 @@ public class DBManager {
 			try {
 				Scanner S = new Scanner(System.in);
 				tempvar = S.nextInt();
-				}
+			}
 			catch (InputMismatchException ex) {
 				ok = false;
-				}
+			}
 			if(tempvar<0||tempvar>2) {
 				ok = false;
 			}
@@ -73,32 +130,44 @@ public class DBManager {
 		while(!ok);
 
 		switch (tempvar){
-			case 0:
-				istVeggie = true;
-				break;
-				
-			case 1: 
-				istVeggie = false;
-				break;
-				
-			case 2: 
-				break;
+		case 0:
+			istVeggie = true;
+			break;
+
+		case 1: 
+			istVeggie = false;
+			break;
+
+		case 2: 
+			break;
 		}
-		
+
 		try {
 			String response = apiWrapper.getRecipe(URL).body().string();
 			JSONArray array = new JSONArray(apiWrapper.getRecipe(URL).body().string());
 			System.out.println(response);
 			dishName = (String) (array.getJSONObject(0).get("name"));
-			dishImage = (Blob) (array.getJSONObject(0).get("images"));
-			dishCookingInstruction = array.getJSONObject(0).getJSONArray("ingredients").toString();
+			try {
+				URL url = new URL(array.getJSONObject(0).get("images").toString()
+						.replace('"', ' ')
+						.replace('[', ' ')
+						.replace(']', ' ')
+						.trim());
+				dishImage = ImageIO.read(url);
+			} 
+			catch (IOException e) {
+			}
+			dishCookingInstruction = array.getJSONObject(0).getJSONArray("instructions").getJSONObject(0).getJSONArray("steps").join(" ").replaceAll("\"","");
 			String ingredient = "";
 			for (Object object : array.getJSONObject(0).getJSONArray("ingredients")) {
-				String[] arrOfStr = ((String) object).split(" ", 2);
+				String[] arrOfStr = ((String) object).split(" ", 3);
+				System.out.println(arrOfStr[0]);
+				System.out.println(arrOfStr[1]);
+				System.out.println(arrOfStr[2]);
 				ingredient = arrOfStr[2];
-			ingredients.put(ingredient, new HashMap<String, Object>());
-			ingredients.get(ingredient).put("amount", arrOfStr[0]);
-			ingredients.get(ingredient).put("unit", arrOfStr[1]);
+				ingredients.put(ingredient, new HashMap<String, Object>());
+				ingredients.get(ingredient).put("amount", arrOfStr[0]);
+				ingredients.get(ingredient).put("unit", arrOfStr[1]);
 			}
 
 		} catch (IOException e) {
@@ -117,11 +186,11 @@ public class DBManager {
 				e.printStackTrace();
 			}
 	}
-	
+
 	public static void createDatabase() throws SQLException{
-		Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
-				"Luca",
-				"lucamysql127");
+		Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/cookbrerezeptdatenbank?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
+				"root",
+				"root");
 		Statement stmt = con.createStatement();
 		stmt.executeUpdate("Drop Database if exists cookbrerezeptdatenbank;");
 		stmt.executeUpdate("create database cookbrerezeptdatenbank;");
@@ -129,8 +198,8 @@ public class DBManager {
 		stmt.executeUpdate("Create table Gericht ( Gericht_ID int auto_increment primary key, "
 				+ "Gericht_Name varchar(50) not null, "
 				+ "Gericht_Kochanleitung text not null, "
-				+ "Gerich_Bild blob, "
-				+ "Ist_Veggie boolean not null);"
+				+ "Gericht_Bild blob, "
+				+ "Ist_Veggie boolean);"
 				);
 		stmt.executeUpdate("Create table Zutat (" 
 				+ "Zutat_ID int auto_increment primary key," 
@@ -145,48 +214,62 @@ public class DBManager {
 		stmt.executeUpdate("alter table Menge add constraint Gericht_ID foreign key (Gericht_ID) references Gericht(Gericht_ID);");
 		stmt.executeUpdate("alter table Menge add constraint Zutat_ID foreign key (Zutat_ID) references Zutat(Zutat_ID);");
 	}
-	
+
 	public static void releaseConnection(Connection con) throws SQLException{ 
-			if(con != null)
-				con.close();
+		if(con != null)
+			con.close();
 	}
-	
-	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Blob dishImage, Map<String, Map<String, Object>> ingredients, boolean istVeggie) {
-		/*try {
+
+	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients, boolean istVeggie) {
+		try {
 			Statement stmt = con.createStatement();
-			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,dishImage,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','"+istVeggie+"')");
+			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','"+(istVeggie?1:0)+"')");
 			for(String ingredient : ingredients.keySet()) {
-			stmt.executeUpdate("Insert into Zutat(Zutat_Name) values('"+((Map)ingredients.get(ingredient))+"')");
-			int ingredientID = stmt.executeUpdate("Select Zutat_ID from table Zutat where Zutat_Name ='"+((Map)ingredients.get(ingredient))+"'");
-			int dishID = stmt.executeUpdate("Select Gericht_ID from table Gericht where Gericht_Name ='"+dishName+"'");
-			stmt.executeUpdate("Insert into Menge(Zutat_ID,Zutat_Namem,Einheit) values('"+ingredientID+"','"+dishID+"','"+((Map)ingredients.get(ingredient)).get("unit")+"')");
+				stmt.executeUpdate("Insert into Zutat(Zutat_Name,Einheit) values('"+ingredient+"','"+(ingredients.get(ingredient).get("unit"))+"')");
+				ResultSet ingredientID = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name ='"+dishName+"'");
+				if(ingredientID.next()&&dishID.next()) {
+					stmt.executeUpdate("Insert into Menge(Gericht_ID,Zutat_ID,Menge) values('"+dishID.getInt(1)+"','"+ingredientID.getInt(1)+"','"+(ingredients.get(ingredient)).get("amount")+"')");}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
-	
-	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Blob dishImage, Map<String, Map<String, Object>> ingredients) {
-		/*try {
+
+	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients) {
+		try {
 			Statement stmt = con.createStatement();
-			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,dishImage,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','null')");
+			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"')");
 			for(String ingredient : ingredients.keySet()) {
-			stmt.executeUpdate("Insert into Zutat(Zutat_Name) values('"+((Map)ingredients.get(ingredient))+"')");
-			int ingredientID = stmt.executeUpdate("Select Zutat_ID from table Zutat where Zutat_Name ='"+((Map)ingredients.get(ingredient))+"'");
-			int dishID = stmt.executeUpdate("Select Gericht_ID from table Gericht where Gericht_Name ='"+dishName+"'");
-			stmt.executeUpdate("Insert into Menge(Zutat_ID,Zutat_Namem,Einheit) values('"+ingredientID+"','"+dishID+"','"+((Map)ingredients.get(ingredient)).get("unit")+"')");
+				stmt.executeUpdate("Insert into Zutat(Zutat_Name,Einheit) values('"+ingredient+"','"+(ingredients.get(ingredient).get("unit"))+"')");
+				ResultSet ingredientID = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name ='"+dishName+"'");
+				if(ingredientID.next()&&dishID.next()) {
+					stmt.executeUpdate("Insert into Menge(Gericht_ID,Zutat_ID,Menge) values('"+dishID.getInt(1)+"','"+ingredientID.getInt(1)+"','"+(ingredients.get(ingredient)).get("amount")+"')");}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
-	
-	public static void removeDish(Connection con) {
-		/*try {
+
+	//Probleme mit Löschen
+	/*public static void removeDish(Connection con) { 
+		Scanner Sc = new Scanner(System.in);
+		System.out.print("Wie heißt das Gericht, dass Sie löschen möchten: ");
+		String dishName = Sc.nextLine();
+		try {
 			Statement stmt = con.createStatement();
-			stmt.executeUpdate("Delete from Gericht where /");
+			ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name ='"+dishName+"'");
+			if(dishID.next()) {
+				stmt.executeUpdate("Delete from Gericht where Gericht_ID ='"+dishID.getInt(1)+"'");
+				stmt.executeUpdate("Delete from Menge where Gericht_ID ='"+dishID.getInt(1)+"'");
+			}
+			else {
+				System.out.println("Es gibt in der Datebank kein Gericht mit diesem Namen.");
+			}
+			stmt.executeUpdate("Delete from Menge where Gericht_ID ='"+dishID.getInt(1)+"'");
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}*/
-	}
+		}
+	}*/
 }
