@@ -15,13 +15,13 @@ public class CookbreMain {
 		} catch (SQLException e1) {
 			e1.printStackTrace();
 		}
-		//DBManager.scrapeDataFromMultipleLinks();
+		DBManager.scrapeDataFromMultipleLinks();
 		
-		/*try {
+		try {
 			DBManager.removeDish(DBManager.getConnection());
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}*/
+		}
 		//DBManager.scrapeDataFromOneLink();
 	}
 }

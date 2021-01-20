@@ -56,7 +56,6 @@ public class DBManager {
 				try {
 					String response = apiWrapper.getRecipe(URL).body().string();
 					JSONArray array = new JSONArray(apiWrapper.getRecipe(URL).body().string());
-					System.out.println(response);
 					dishName = (String) (array.getJSONObject(0).get("name"));
 					try {
 						URL url = new URL(array.getJSONObject(0).get("images").toString()
@@ -72,9 +71,6 @@ public class DBManager {
 					String ingredient = "";
 					for (Object object : array.getJSONObject(0).getJSONArray("ingredients")) {
 						String[] arrOfStr = ((String) object).split(" ", 3);
-						System.out.println(arrOfStr[0]);
-						System.out.println(arrOfStr[1]);
-						System.out.println(arrOfStr[2]);
 						ingredient = arrOfStr[2];
 						ingredients.put(ingredient, new HashMap<String, Object>());
 						ingredients.get(ingredient).put("amount", arrOfStr[0]);
@@ -225,11 +221,15 @@ public class DBManager {
 			Statement stmt = con.createStatement();
 			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','"+(istVeggie?1:0)+"')");
 			for(String ingredient : ingredients.keySet()) {
-				stmt.executeUpdate("Insert into Zutat(Zutat_Name,Einheit) values('"+ingredient+"','"+(ingredients.get(ingredient).get("unit"))+"')");
-				ResultSet ingredientID = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				ResultSet ingredientID1 = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				if(!ingredientID1.next()) {
+					stmt.executeUpdate("Insert into Zutat(Zutat_Name,Einheit) values('"+ingredient+"','"+(ingredients.get(ingredient).get("unit"))+"')");			
+				}
 				ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name ='"+dishName+"'");
-				if(ingredientID.next()&&dishID.next()) {
-					stmt.executeUpdate("Insert into Menge(Gericht_ID,Zutat_ID,Menge) values('"+dishID.getInt(1)+"','"+ingredientID.getInt(1)+"','"+(ingredients.get(ingredient)).get("amount")+"')");}
+				ResultSet ingredientID2 = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				if(ingredientID2.next()&&dishID.next()) {
+					stmt.executeUpdate("Insert into Menge(Gericht_ID,Zutat_ID,Menge) values('"+dishID.getInt(1)+"','"+ingredientID2.getInt(1)+"','"+(ingredients.get(ingredient).get("amount"))+"')");
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -241,19 +241,22 @@ public class DBManager {
 			Statement stmt = con.createStatement();
 			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"')");
 			for(String ingredient : ingredients.keySet()) {
-				stmt.executeUpdate("Insert into Zutat(Zutat_Name,Einheit) values('"+ingredient+"','"+(ingredients.get(ingredient).get("unit"))+"')");
-				ResultSet ingredientID = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				ResultSet ingredientID1 = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				if(!ingredientID1.next()) {
+					stmt.executeUpdate("Insert into Zutat(Zutat_Name,Einheit) values('"+ingredient+"','"+(ingredients.get(ingredient).get("unit"))+"')");			
+				}
 				ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name ='"+dishName+"'");
-				if(ingredientID.next()&&dishID.next()) {
-					stmt.executeUpdate("Insert into Menge(Gericht_ID,Zutat_ID,Menge) values('"+dishID.getInt(1)+"','"+ingredientID.getInt(1)+"','"+(ingredients.get(ingredient)).get("amount")+"')");}
+				ResultSet ingredientID2 = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
+				if(ingredientID2.next()&&dishID.next()) {
+					stmt.executeUpdate("Insert into Menge(Gericht_ID,Zutat_ID,Menge) values('"+dishID.getInt(1)+"','"+ingredientID2.getInt(1)+"','"+(ingredients.get(ingredient).get("amount"))+"')");
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	//Probleme mit Löschen
-	/*public static void removeDish(Connection con) { 
+	public static void removeDish(Connection con) { 
 		Scanner Sc = new Scanner(System.in);
 		System.out.print("Wie heißt das Gericht, dass Sie löschen möchten: ");
 		String dishName = Sc.nextLine();
@@ -261,15 +264,14 @@ public class DBManager {
 			Statement stmt = con.createStatement();
 			ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name ='"+dishName+"'");
 			if(dishID.next()) {
-				stmt.executeUpdate("Delete from Gericht where Gericht_ID ='"+dishID.getInt(1)+"'");
 				stmt.executeUpdate("Delete from Menge where Gericht_ID ='"+dishID.getInt(1)+"'");
+				stmt.executeUpdate("Delete from Gericht where Gericht_ID ='"+dishID.getInt(1)+"'");	
 			}
 			else {
 				System.out.println("Es gibt in der Datebank kein Gericht mit diesem Namen.");
 			}
-			stmt.executeUpdate("Delete from Menge where Gericht_ID ='"+dishID.getInt(1)+"'");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}*/
+	}
 }
