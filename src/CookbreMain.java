@@ -9,8 +9,19 @@ import org.json.JSONObject;
 
 public class CookbreMain {
 	public static void main(String[] args) throws IOException {
-
 		try {
+			DBManager.showAllDishes(DBManager.getConnection());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		/*try {
+			DBManager.getDishByName(DBManager.getConnection(),"burger");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}*/
+		
+		/*try {
 			DBManager.createDatabase();
 		} catch (SQLException e1) {
 			e1.printStackTrace();
@@ -21,7 +32,7 @@ public class CookbreMain {
 			DBManager.removeDish(DBManager.getConnection());
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}
+		}*/
 		//DBManager.scrapeDataFromOneLink();
 	}
 }

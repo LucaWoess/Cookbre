@@ -95,13 +95,12 @@ public class DBManager {
 		}
 	}
 
-	public static void scrapeDataFromOneLink() {
+	public static void scrapeDataFromOneLink(String URL, boolean isVeggie) {
 		String dishName = "";
 		String dishCookingInstruction = "";
 		Image dishImage = null;
-		boolean istVeggie = false;
+		isVeggie = false;
 		int tempvar = -1;
-		String URL;
 		Map<String, Map<String, Object>> ingredients = new HashMap<>();
 		APIWrapper apiWrapper = new APIWrapper();
 		Scanner Sc = new Scanner(System.in);
@@ -127,11 +126,11 @@ public class DBManager {
 
 		switch (tempvar){
 		case 0:
-			istVeggie = true;
+			isVeggie = true;
 			break;
 
 		case 1: 
-			istVeggie = false;
+			isVeggie = false;
 			break;
 
 		case 2: 
@@ -169,9 +168,9 @@ public class DBManager {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if(istVeggie || !istVeggie)
+		if(isVeggie || !isVeggie)
 			try {
-				addDish(getConnection(), dishName, dishCookingInstruction, dishImage, ingredients, istVeggie);
+				addDish(getConnection(), dishName, dishCookingInstruction, dishImage, ingredients, isVeggie);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -216,10 +215,10 @@ public class DBManager {
 			con.close();
 	}
 
-	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients, boolean istVeggie) {
+	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients, boolean isVeggie) {
 		try {
 			Statement stmt = con.createStatement();
-			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','"+(istVeggie?1:0)+"')");
+			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','"+(isVeggie?1:0)+"')");
 			for(String ingredient : ingredients.keySet()) {
 				ResultSet ingredientID1 = con.createStatement().executeQuery("Select Zutat_ID from Zutat where Zutat_Name ='"+ingredient+"'");
 				if(!ingredientID1.next()) {
@@ -274,4 +273,49 @@ public class DBManager {
 			e.printStackTrace();
 		}
 	}
+
+	public static ArrayList<String> getDishByName(Connection con, String search) {
+		ArrayList<String> dishes = new ArrayList<String>();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name like '%"+search+"%'");
+			ResultSet searchAmount = con.createStatement().executeQuery("Select count(Gericht_ID) from Gericht where Gericht_Name like '%"+search+"%'");
+			if(dishID.next()&&searchAmount.next()) {
+				System.out.println("Gerichte die Ihrer Suche entsprechen:");
+				for(int i=1;i<=searchAmount.getInt(1);i++) {
+					ResultSet dishName = con.createStatement().executeQuery("Select Gericht_Name from Gericht where Gericht_ID = '"+dishID.getInt(1)+"'");
+					if(dishName.next()) {
+						dishes.add(dishName.getString(i));
+					}
+				}
+			}
+			else {
+				System.out.println("Es gibt in der Datebank kein Gericht mit diesem Namen.");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return dishes;
+
+	}
+	
+	public static ArrayList<String> showAllDishes(Connection con){
+		ArrayList<String> allDishes = new ArrayList<String>();
+		try {
+			Statement stmt = con.createStatement();
+			ResultSet allDishesRS = con.createStatement().executeQuery("Select Gericht_Name from Gericht");
+			ResultSet searchAmount = con.createStatement().executeQuery("Select count(Gericht_ID) from Gericht");
+			if(allDishesRS.next()&&searchAmount.next())
+			for(int i=1;i<=searchAmount.getInt(1);i++) {
+				allDishes.add(allDishesRS.getString(i));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return allDishes;
+	}
+
+	/*public static void getDishByIngredient() {
+
+	}*/
 }
