@@ -275,6 +275,44 @@ public class DBManager {
 		return allDishes;
 	}
 
+	public ArrayList<Object> getDishByID(Connection con, int dishID) {
+		ArrayList<Object> Dish = new ArrayList<Object>();	
+		try {
+			Statement stmt = con.createStatement();
+			String dishName = "";
+			ResultSet dishNameRS = con.createStatement().executeQuery("Select Gericht_Name from Gericht where Gericht_ID ='"+dishID+"'");
+			if (dishNameRS.next()) dishName = dishNameRS.getString(1);
+			String dishCookingInstruction = "";
+			ResultSet dishCookingInstructionRS = con.createStatement().executeQuery("Select Gericht_Kochanleitung from Gericht where Gericht_ID ='"+dishID+"'");
+			if (dishCookingInstructionRS.next()) dishCookingInstruction = dishCookingInstructionRS.getString(1);
+			Blob dishImage = null;
+			ResultSet dishImageRS = con.createStatement().executeQuery("Select Gericht_Kochanleitung from Gericht where Gericht_ID ='"+dishID+"'");
+			if (dishImageRS.next()) dishImage = dishImageRS.getBlob(1);
+			Map<String, Map<String, Object>> ingredients = new HashMap<>();
+			ResultSet ingredientRS = con.createStatement().executeQuery("Select Zutat_ID from Menge where Gericht_ID ='"+dishID+"'");
+			ArrayList<Integer> ingredientIDs = new ArrayList<Integer>(); 
+			while(ingredientRS.next()) {
+			ingredientIDs.add(ingredientRS.getInt(1));
+			}
+			for(int ingredientID: ingredientIDs) {
+				ResultSet ingredientNameRS = con.createStatement().executeQuery("Select Zutat_Name from Zutat where Zutat_ID ='"+ingredientID+"'");
+				String ingredient = "";
+				if(ingredientNameRS.next()) ingredient = ingredientNameRS.getString(1);
+				ingredients.put(ingredient, new HashMap<String, Object>());
+				ResultSet ingredientAmountRS = con.createStatement().executeQuery("Select Menge from Menge where Zutat_ID ='"+ingredientID+"'");
+				if(ingredientAmountRS.next()) ingredients.get(ingredient).put("amount", ingredientAmountRS.getInt(1));
+				ResultSet ingredientUnitRS = con.createStatement().executeQuery("Select Einheit from Zutat where Zutat_ID ='"+ingredientID+"'");
+				if(ingredientUnitRS.next()) ingredients.get(ingredient).put("unit", ingredientUnitRS.getString(1));	
+			}
+			Dish.add(dishName);
+			Dish.add(dishCookingInstruction);
+			Dish.add(dishImage);
+			Dish.add(ingredients);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return Dish;
+	}
 	/*public static void getDishByIngredient() {
 
 	}*/
