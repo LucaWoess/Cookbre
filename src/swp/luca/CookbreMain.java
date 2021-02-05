@@ -1,3 +1,4 @@
+package swp.luca;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -9,24 +10,20 @@ import org.json.JSONObject;
 
 public class CookbreMain {
 	public static void main(String[] args) throws IOException {
-		try {
-			DBManager.showAllDishes(DBManager.getConnection());
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		/*try {
 			DBManager.getDishByName(DBManager.getConnection(),"burger");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}*/
 		
+		//DBManager.scrapeDataFromMultipleLinks();
+		
 		/*try {
 			DBManager.createDatabase();
 		} catch (SQLException e1) {
 			e1.printStackTrace();
 		}
-		DBManager.scrapeDataFromMultipleLinks();
+		
 		
 		try {
 			DBManager.removeDish(DBManager.getConnection());

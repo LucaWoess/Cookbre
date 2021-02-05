@@ -1,3 +1,4 @@
+package swp.luca;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -24,7 +25,7 @@ import java.net.URL;
 import java.sql.Blob;
 
 public class DBManager {
-	public static Connection getConnection() throws SQLException{
+	public Connection getConnection() throws SQLException{
 		Connection con = null;
 		con = DriverManager.getConnection(
 				"jdbc:mysql://127.0.0.1:3306/cookbrerezeptdatenbank?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", 	//DB
@@ -34,7 +35,7 @@ public class DBManager {
 		return con;
 	}
 
-	public static ArrayList<String> readURLFile(String fileName) throws FileNotFoundException, IOException{
+	public ArrayList<String> readURLFile(String fileName) throws FileNotFoundException, IOException{
 		ArrayList<String> URLs = new ArrayList<String>();
 		String s;
 		BufferedReader urlReader = new BufferedReader(new FileReader(fileName));
@@ -45,7 +46,7 @@ public class DBManager {
 		return URLs;
 	}
 
-	public static void scrapeDataFromMultipleLinks() {
+	public void scrapeDataFromMultipleLinks() {
 		try {
 			for (String URL : readURLFile("URLs.txt")) {
 				String dishName = "";
@@ -95,48 +96,12 @@ public class DBManager {
 		}
 	}
 
-	public static void scrapeDataFromOneLink(String URL, boolean isVeggie) {
+	public void scrapeDataFromOneLink(String URL, boolean isVeggie) {
 		String dishName = "";
 		String dishCookingInstruction = "";
 		Image dishImage = null;
-		isVeggie = false;
-		int tempvar = -1;
 		Map<String, Map<String, Object>> ingredients = new HashMap<>();
 		APIWrapper apiWrapper = new APIWrapper();
-		Scanner Sc = new Scanner(System.in);
-		System.out.print("Fügen sie hier den Link des gwünschten neuen Rezepts ein: ");
-		URL = Sc.nextLine();
-		System.out.print("\nIst dieses Gericht vegetarisch? JA(0) NEIN(1) KEINE AHNUNG(2): ");
-		boolean ok;
-		do {
-			ok = true;
-			try {
-				Scanner S = new Scanner(System.in);
-				tempvar = S.nextInt();
-			}
-			catch (InputMismatchException ex) {
-				ok = false;
-			}
-			if(tempvar<0||tempvar>2) {
-				ok = false;
-			}
-			if(!ok) System.out.println("Dies ist keine der 3 Auswahlmöglichkeiten! \nVersuchen Sie es erneut: ");
-		}
-		while(!ok);
-
-		switch (tempvar){
-		case 0:
-			isVeggie = true;
-			break;
-
-		case 1: 
-			isVeggie = false;
-			break;
-
-		case 2: 
-			break;
-		}
-
 		try {
 			String response = apiWrapper.getRecipe(URL).body().string();
 			JSONArray array = new JSONArray(apiWrapper.getRecipe(URL).body().string());
@@ -182,7 +147,7 @@ public class DBManager {
 			}
 	}
 
-	public static void createDatabase() throws SQLException{
+	public void createDatabase() throws SQLException{
 		Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/cookbrerezeptdatenbank?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
 				"root",
 				"root");
@@ -210,12 +175,12 @@ public class DBManager {
 		stmt.executeUpdate("alter table Menge add constraint Zutat_ID foreign key (Zutat_ID) references Zutat(Zutat_ID);");
 	}
 
-	public static void releaseConnection(Connection con) throws SQLException{ 
+	public void releaseConnection(Connection con) throws SQLException{ 
 		if(con != null)
 			con.close();
 	}
 
-	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients, boolean isVeggie) {
+	public void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients, boolean isVeggie) {
 		try {
 			Statement stmt = con.createStatement();
 			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild,Ist_Veggie) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"','"+(isVeggie?1:0)+"')");
@@ -235,7 +200,7 @@ public class DBManager {
 		}
 	}
 
-	public static void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients) {
+	public void addDish(Connection con, String dishName, String dishCookingInstruction, Image dishImage, Map<String, Map<String, Object>> ingredients) {
 		try {
 			Statement stmt = con.createStatement();
 			stmt.executeUpdate("Insert into Gericht(Gericht_Name,Gericht_Kochanleitung,Gericht_Bild) values('"+dishName+"','"+dishCookingInstruction+"','"+dishImage+"')");
@@ -255,10 +220,7 @@ public class DBManager {
 		}
 	}
 
-	public static void removeDish(Connection con) { 
-		Scanner Sc = new Scanner(System.in);
-		System.out.print("Wie heißt das Gericht, dass Sie löschen möchten: ");
-		String dishName = Sc.nextLine();
+	public void removeDish(Connection con, String dishName) { 
 		try {
 			Statement stmt = con.createStatement();
 			ResultSet dishID = con.createStatement().executeQuery("Select Gericht_ID from Gericht where Gericht_Name ='"+dishName+"'");
@@ -267,14 +229,14 @@ public class DBManager {
 				stmt.executeUpdate("Delete from Gericht where Gericht_ID ='"+dishID.getInt(1)+"'");	
 			}
 			else {
-				System.out.println("Es gibt in der Datebank kein Gericht mit diesem Namen.");
+				//??
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static ArrayList<String> getDishByName(Connection con, String search) {
+	public ArrayList<String> getDishByName(Connection con, String search) {
 		ArrayList<String> dishes = new ArrayList<String>();
 		try {
 			Statement stmt = con.createStatement();
@@ -299,15 +261,13 @@ public class DBManager {
 
 	}
 	
-	public static ArrayList<String> showAllDishes(Connection con){
+	public ArrayList<String> showAllDishes(Connection con){
 		ArrayList<String> allDishes = new ArrayList<String>();
 		try {
 			Statement stmt = con.createStatement();
 			ResultSet allDishesRS = con.createStatement().executeQuery("Select Gericht_Name from Gericht");
-			ResultSet searchAmount = con.createStatement().executeQuery("Select count(Gericht_ID) from Gericht");
-			if(allDishesRS.next()&&searchAmount.next())
-			for(int i=1;i<=searchAmount.getInt(1);i++) {
-				allDishes.add(allDishesRS.getString(i));
+			while(allDishesRS.next()) {
+				allDishes.add(allDishesRS.getString(1));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

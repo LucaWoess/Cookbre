@@ -1,3 +1,4 @@
+package swp.luca;
 public class Amount {
 	private int dishID;
 	private int ingredientID;

@@ -1,3 +1,4 @@
+package swp.luca;
 public class Ingredient {
 	private int ingredientID;
 	private String ingredientName;

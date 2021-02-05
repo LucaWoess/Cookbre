@@ -1,3 +1,4 @@
+package swp.luca;
 import java.awt.Image;
 
 public class Dish {
