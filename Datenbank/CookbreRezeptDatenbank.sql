@@ -23,3 +23,11 @@ Create table Menge (
 
 alter table Menge add constraint Gericht_ID foreign key (Gericht_ID) references Gericht(Gericht_ID);
 alter table Menge add constraint Zutat_ID foreign key (Zutat_ID) references Zutat(Zutat_ID);
+
+Create table Bewertung {
+	Bewertung_ID int auto_increment primary key,
+	Gericht_ID int not null,
+	Bewertung int not null
+};
+
+alter table Bewertung add constraint Gericht_ID foreign key (Gericht_ID) references Gericht(Gericht_ID);
